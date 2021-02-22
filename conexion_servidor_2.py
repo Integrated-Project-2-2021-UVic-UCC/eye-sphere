@@ -1,5 +1,4 @@
 import socket
-#import numpy as np
 import cv2
 import pickle
 import struct
@@ -24,13 +23,4 @@ while True:
             key=cv2.waitKey(1) and 0xFF
             if key == ord('q'):
                 conexion.close()
-##    """
-##    print(addr)
-##    peticion=conexion.recv(1024) #esperamos a que el cliente envie algo, lo captamos i lo guardamos
-##    peticion=pickle.loads(bytes(peticion))
-##    print(peticion)
-##    msg=bytes('Ok','utf-8') #montamos un mensaje en byte(utf-8) para enviarle la respuesta
-##    conexion.send(msg) #enviamos la respuesta
-##    conexion.close() #cerramos conexion con el cliente.
-##    cv2.imshow('Visor',peticion)
-##    """
+
