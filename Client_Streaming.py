@@ -1,3 +1,5 @@
+#Codigo streaming CLIENTE comprimiendo video jpeg
+
 import socket
 import cv2
 import pickle
@@ -7,7 +9,6 @@ import numpy as np
 miSocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 #miSocket.connect( ('25.2.1.212', 25500) ) #nos conectamos a un servidor, asi que nos asignamos como clientes
 miSocket.connect( ('localhost',8000) ) #nos conectamos a un servidor, asi que nos asignamos como clientes
-#miSocket.connect( ('192.168.43.213', 8000) )
 
 data = b""
 header_size =6
