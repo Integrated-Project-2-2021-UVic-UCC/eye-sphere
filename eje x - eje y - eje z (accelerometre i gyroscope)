@@ -1,0 +1,62 @@
+( mainActivity)
+package com.example.myapplication;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.widget.TextView;
+
+public class MainActivity extends Activity implements SensorEventListener {
+    private SensorManager miManager;
+    private Sensor miAccelerometre;
+    private Sensor miGyroscope;
+    TextView xa,ya,za,xg,yg,zg;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.content_main);
+        //se instancian los sensores siempre en onCreate
+        //getSystemService se hace asi para entrar al servicio de sensores de mi dispositivo
+        miManager=(SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        //se instancian los sensores que se usaran el accelerometre y el gyroscope
+        miAccelerometre=miManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        miGyroscope=miManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); //se coloca la pantalla en vertical
+        xa=(TextView)findViewById(R.id.xa);
+        ya=(TextView)findViewById(R.id.ya);
+        za=(TextView)findViewById(R.id.za);
+        xg=(TextView)findViewById(R.id.xg);
+        yg=(TextView)findViewById(R.id.yg);
+        zg=(TextView)findViewById(R.id.zg);
+    }
+    protected void onResume() { // se registran los datos de los sensores
+        miManager.registerListener(this, miAccelerometre, SensorManager.SENSOR_DELAY_GAME);
+        miManager.registerListener(this, miGyroscope, SensorManager.SENSOR_DELAY_GAME);
+        super.onResume();
+    }
+    protected void onPause() {
+        miManager.unregisterListener(this);
+        super.onPause();
+    }
+    @Override
+    public void onSensorChanged(SensorEvent event) { //se actualizan los datos nuevos de los sensores
+        if (event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){ //si el sensor es de tipo accelerometre
+            this.xa.setText("eje_x: "+event.values[0]);
+            this.ya.setText("eje_y: "+event.values[1]);
+            this.za.setText("eje_z: "+event.values[2]);
+        }else if(event.sensor.getType()==Sensor.TYPE_GYROSCOPE){ //si el sensor es de tipo gyroscope
+            this.xg.setText("eje_x: "+event.values[0]);
+            this.yg.setText("eje_y: "+event.values[1]);
+            this.zg.setText("eje_z: "+event.values[2]);
+        }
+    }
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+}
