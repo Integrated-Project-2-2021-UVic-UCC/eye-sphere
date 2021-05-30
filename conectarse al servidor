@@ -1,0 +1,90 @@
+package com.example.myapplication;
+
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+import static android.os.Build.HOST;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static Socket clientesocket;
+    //private static ServerSocket serversocket;
+    //private static InputStreamReader de_byte_a_caracteres;
+    //private static BufferedReader lee_caracteres;
+    private static PrintWriter imprime_una_redacción;
+    TextInputEditText texto_escriba;
+    TextInputLayout texto_mensaje;
+    String mensaje = "";
+    private Context context;
+    //el usuario debe estar enterado de a donde se conecta
+    private static String ip = "192.168.1.131";
+    private static int puerto = 8080;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        texto_escriba = findViewById(R.id.texto_escriba);
+        texto_mensaje = findViewById(R.id.texto_mensaje);
+    }
+
+    public void enviar_texto(View view) {
+        if (texto_escriba.getText().toString().length() > 0) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.i("I/TCP Client", "Send data to server");
+                        DataOutputStream output = new DataOutputStream(clientesocket.getOutputStream());
+                        String request = texto_escriba.getText().toString();
+                        output.writeUTF(request);
+                        output.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        } else {
+            Toast.makeText(context, "USER" + texto_escriba, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void enviar_usuario(View view) {
+        mensaje = texto_escriba.getText().toString();
+        cliente myATaskkYM = new cliente();
+        myATaskkYM.execute();
+    }
+
+    class cliente extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params){
+            try {
+                clientesocket = new Socket(ip, puerto);
+                /*imprime_una_redacción = new PrintWriter(clientesocket.getOutputStream());
+                imprime_una_redacción.write("USER" +mensaje);
+                imprime_una_redacción.flush();
+                imprime_una_redacción.close();*/
+            } catch (IOException e) {
+                //e.printStackTrace();
+                e.getMessage();
+            }
+        return null;
+        }
+    }
+}
