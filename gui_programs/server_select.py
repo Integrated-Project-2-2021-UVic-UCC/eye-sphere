@@ -7,7 +7,7 @@ import select
 class Server():
     def __init__(self):
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.sock.bind(('localhost',8080))
+        self.sock.bind(('192.168.1.146',8080))
         self.sock.listen(10)
         self.sock.setblocking(False)
 
@@ -43,6 +43,7 @@ class Event_loop():
                 r.connected=True
                 r.connect_client(mobile)
                 send_msg('Connected successfully',r)
+                self.connections[mobile]=robot
 
     def detect_commands(self,msg,reader):
 
@@ -57,6 +58,7 @@ class Event_loop():
                 self.mobiles.remove(dis_client)
                 if dis_client.connected:
                     dis_client.connected_sock.connected=False
+                    send_msg("!DISCONNECT",self.connections[dis_client])
 
             self.readers.remove(reader)
             del self.clients_dic[reader]
@@ -88,30 +90,37 @@ class Event_loop():
     def process_connections(self):
         try:
             while True:
-                readers, _, _=select.select(self.readers,[],[]) #wait until a new conection or a new message arrives
-                for reader in readers:
+                try:
+                    readers, _, _=select.select(self.readers,[],[]) #wait until a new conection or a new message arrives
+                    for reader in readers:
 
-                    #~~~~~~~~~~~~~~~~~~~~~~~  Server Block  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    
-                    if reader == self.server:                           #if the server is ready to read, means that a new connection arrives
-                        conn, addr=self.server.accept()                 #the connection is accepted, and the socket object is returned
-                        new_client=Client(conn,addr)                    #we save this connection in our custom class to take control of data sent
-                        new_client.set_name(recv_msg(new_client))       #as the first msg from client is always the name, we save it
-                        self.classify(new_client)
-                        self.add_readers(new_client.client)             #we add the client socket object to the list of potencial readers
-                        self.clients_dic[new_client.client]=new_client  #to remember the custom object related to the socket, we save it in a dictionary
-                        print(f'New connection from {new_client.name}')
-                    
-                    #~~~~~~~~~~~~~~~~~~~~~~~  Client Block  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    else:
-                        if self.clients_dic[reader].connected:
-                            recv_data(self.clients_dic[reader])
-                            # msg=recv_msg(self.clients_dic[reader])          #we call the global funtion tha allows recieve any msg
-                            # send_msg(msg,self.clients_dic[reader].connected_sock)
+                        #~~~~~~~~~~~~~~~~~~~~~~~  Server Block  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        
+                        if reader == self.server:                           #if the server is ready to read, means that a new connection arrives
+                            conn, addr=self.server.accept()                 #the connection is accepted, and the socket object is returned
+                            new_client=Client(conn,addr)                    #we save this connection in our custom class to take control of data sent
+                            new_client.set_name(recv_msg(new_client))       #as the first msg from client is always the name, we save it
+                            self.classify(new_client)
+                            self.add_readers(new_client.client)             #we add the client socket object to the list of potencial readers
+                            self.clients_dic[new_client.client]=new_client  #to remember the custom object related to the socket, we save it in a dictionary
+                            print(f'New connection from {new_client.name}')
+                        
+                        #~~~~~~~~~~~~~~~~~~~~~~~  Client Block  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                         else:
-                            msg=recv_msg(self.clients_dic[reader])          #we call the global funtion tha allows recieve any msg
-                            print(f'[{self.clients_dic[reader].name}] {msg}')
-                            self.detect_commands(msg,reader)
+                            if self.clients_dic[reader].connected:
+                                recv_data(self.clients_dic[reader])
+                                # msg=recv_msg(self.clients_dic[reader])          #we call the global funtion tha allows recieve any msg
+                                # send_msg(msg,self.clients_dic[reader].connected_sock)
+                            else:
+                                msg=recv_msg(self.clients_dic[reader])          #we call the global funtion tha allows recieve any msg
+                                print(f'[{self.clients_dic[reader].name}] {msg}')
+                                self.detect_commands(msg,reader)
+                except ConnectionResetError:
+                    #reader.close()
+                    self.detect_commands("!DISCONNECT",reader)
+                    #del self.clients_dic[reader]
+                    #self.clients_dic[reader].connected_sock.client.close()
+                    #self.readers.remove(reader)
 
 
         except KeyboardInterrupt:           #Protocol to desconect clients from server to leave the addres free

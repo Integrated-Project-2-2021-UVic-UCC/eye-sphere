@@ -9,55 +9,22 @@ class Client():
     def __init__(self,name):
         self.data=b''
         self.connexion=False
-        self.t=threading.Thread(target=self.start_video)
+        #self.t=threading.Thread(target=self.start_video)
         self.name=name#input("Choose an username: ")                     #asignamos un nombre con el que el servidor nos conocera
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)  #inicia la comunicacion red con los protocolos especificados
-        self.sock.connect(('localhost',8080))                       #se conecta a la direccion i el purto del servidor
+        self.sock.connect(('192.168.1.146',8080))                       #se conecta a la direccion i el purto del servidor
         self.send_name()                                            
-        #self.loop_forever()
     
     def send_name(self):
         name='USER'+self.name
         sending(name,self.sock)
-
-    def loop_forever(self):
-        try:
-            while True:
-                readers,_,_=select.select([sys.stdin,self.sock],[],[])
-                for reader in readers:
-                    if reader == self.sock:
-                        if self.connexion:
-                            pass
-                        else:
-                            data=self.recieve_msg()
-                            print(f'[Server]\n{data}')
-                            if data == 'Connected successfully':
-                                self.connexion=True
-                                self.t.start()
-                            if data=='!DISCONNECT':
-                                self.connexion=False
-                    else:
-                        msg=sys.stdin.readline()[:-1]
-                        command=msg.split()[0]
-                        if command == '!CONNECT':
-                            sending(command,self.sock)
-                            name=msg.split()[1]
-                            sending(name,self.sock)
-                        else:
-                            sending(msg,self.sock)
-
-        except KeyboardInterrupt:
-            print('Disconnectiong from de server...')
-            sending('!DISCONNECT',self.sock)
-            print('Disconnected!')
-            sys.exit()
     
-    def start_video(self):
-        while True:
-            img=recv_img(self)
-            cv2.imshow('video',img)
-            if cv2.waitKey(1) == ord('q'):
-                break
+    # def start_video(self):
+    #     while True:
+    #         img=recv_img(self)
+    #         cv2.imshow('video',img)
+    #         if cv2.waitKey(1) == ord('q'):
+    #             break
     def send_msg(self,msg):
         sending(msg,self.sock)
     
