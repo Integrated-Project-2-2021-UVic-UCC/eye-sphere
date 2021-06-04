@@ -1,15 +1,18 @@
-import socket
-import sys
-import select
-import threading
-import cv2
+import socket, sys, select, threading, cv2, time, bluetooth, serial
 import numpy as np
-import time
+
 
 class Client():
     def __init__(self):
         self.data=b''
         self.connexion=False
+
+        self.arduino2=serial.Serial("/dev/ttyUSB0",baudrate=9600)
+        #Name: BASE_MOTOR          # MAC: 00:11:35:96:43:69
+        self.BTname = "BASE_MOTOR"      # Device name
+        self.BTaddr = "00:11:35:96:43:69"      # Device Address
+        self.BTport = 1         # RFCOMM port
+
 
         self.name="robot1"#input("Choose an username: ")
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -17,6 +20,13 @@ class Client():
         self.send_name()
         self.stop=True
         self.t=threading.Thread(target=send_img,args=[self,self.sock,lambda : self.stop])
+        try:
+            self.baseBT = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            self.baseBT.connect((self.BTaddr,self.BTport))
+            #print("connected!")
+        except bluetooth.btcommon.BluetoothError as err:
+            # Error handler
+            pass
         self.loop_forever()
 
     def start_video(self):
@@ -36,23 +46,45 @@ class Client():
                     if reader == self.sock:
 
                         data=recv_msg(self)
-                        print(f'[Server]\n{data}')
+                        #print(f'[Server]\n{data}')
+                        if self.connexion:
+                            angle=data
+                            data=recv_msg(self)
+                            dir=bytes(data[:1],'utf8')
+                            vel=data[1:]
+                            new_angle=""
+                            for e in angle:
+                                new_angle=e+new_angle
+                            self.arduino2.write(bytes("X"+new_angle+"Y",'utf8'))
+                            #os.system("clear")
+                            #print(f'Speed: {vel}, Direction: {dir}')
+                            #print(f'Angle: {angle}')
+                            try:
+                                self.baseBT.send(dir+bytes(str(vel),'utf8'))
+                            except bluetooth.btcommon.BluetoothError as err:
+                                # Error handler
+                                pass
 
                         if data == 'Connected successfully':
                             self.connexion=True
                             self.start_video()
                         if data=='!DISCONNECT':
+                            self.arduino2.write(bytes("X"+"09"+"Y",'utf8'))
+                            try:
+                                self.baseBT.send(b'R'+bytes(str(0),'utf8'))
+                            except bluetooth.btcommon.BluetoothError as err:
+                                # Error handler
+                                pass
                             self.connexion=False
                             self.stop=False
                             self.t.join()
-                            self.cam1.release() 
-                            
-                # for _ in writers:
-                #     if self.connexion:
-                #         send_img(self,self.sock)
-                #     else:
-                #         pass
-                #         #self.cam1.release()
+                            self.cam1.release()
+                            self.sock.close()
+                            time.sleep(1)
+                            self.sock.connect(('192.168.1.146',8080))
+                            self.send_name()
+                        
+
                         
 
         except KeyboardInterrupt:
