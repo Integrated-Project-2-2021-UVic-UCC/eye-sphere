@@ -1,0 +1,97 @@
+package com.example.myapplication;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.widget.TextView;
+
+
+public class MainActivity2 extends Activity implements SensorEventListener {
+    private SensorManager miManager;
+    private Sensor miGyroscope;
+
+    String xg,yg,zg;
+    TextView eix_xg,eix_yg,eix_zg;
+
+    public static final String x="eje_x";
+    public static final String y="eje_y";
+    public static final String z="eje_z";
+    int valor_antiguo_gx, valor_nuevo_gx, error_gx, valor_antiguo_gy, valor_nuevo_gy, error_gy, valor_antiguo_gz, valor_nuevo_gz, error_gz;
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
+        miManager=(SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        miGyroscope=miManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT); //se coloca la pantalla en vertical
+
+        eix_xg=(TextView)findViewById(R.id.xg);
+        eix_yg=(TextView)findViewById(R.id.yg);
+        eix_zg=(TextView)findViewById(R.id.zg);
+
+        valor_antiguo_gx=0;
+        valor_antiguo_gy=0;
+        valor_antiguo_gz=0;
+    }
+    protected void onResume() { // se registran los datos de los sensores
+        miManager.registerListener(this, miGyroscope, SensorManager.SENSOR_DELAY_UI);
+        super.onResume();
+    }
+    protected void onPause() {
+        miManager.unregisterListener(this);
+        super.onPause();
+    }
+    @Override
+    public void onSensorChanged(SensorEvent event) { //se actualizan los datos nuevos de los sensores
+        if(event.sensor.getType()==Sensor.TYPE_GYROSCOPE){ //si el sensor es de tipo gyroscope
+            valor_nuevo_gx= (int) event.values[0]*100;
+            error_gx=valor_nuevo_gx-valor_antiguo_gx;
+            if (error_gx>1){
+                xg=String.valueOf(valor_nuevo_gx);
+                valor_antiguo_gx=valor_nuevo_gx;
+                this.eix_xg.setText("eje_x: "+valor_nuevo_gx);
+            }else{
+                xg=String.valueOf(valor_antiguo_gx);
+                this.eix_xg.setText("eje_x: "+valor_antiguo_gx);
+            }
+            valor_nuevo_gy= (int) event.values[1]*100;
+            error_gy=valor_nuevo_gy-valor_antiguo_gy;
+            if (error_gy>1){
+                yg=String.valueOf(valor_nuevo_gy);
+                valor_antiguo_gy=valor_nuevo_gy;
+                this.eix_yg.setText("eje_x: "+valor_nuevo_gy);
+            }else{
+                yg=String.valueOf(valor_antiguo_gy);
+                this.eix_yg.setText("eje_x: "+valor_antiguo_gy);
+            }
+            valor_nuevo_gz= (int) event.values[2]*100;
+            error_gz=valor_nuevo_gz-valor_antiguo_gz;
+            if (error_gz>1){
+                zg=String.valueOf(valor_nuevo_gz);
+                valor_antiguo_gz=valor_nuevo_gz;
+                this.eix_zg.setText("eje_x: "+valor_nuevo_gz);
+            }else{
+                zg=String.valueOf(valor_antiguo_gz);
+                this.eix_zg.setText("eje_x: "+valor_antiguo_gz);
+            }
+            enviar_datos(xg,yg,zg);
+        }
+    }
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+    public void enviar_datos(String eje_x, String eje_y, String eje_z){
+        Intent intento_de_enviar = new Intent(this, MainActivity.class);
+        intento_de_enviar.putExtra(x, eje_x);
+        intento_de_enviar.putExtra(y, eje_y);
+        intento_de_enviar.putExtra(z, eje_z);
+        startActivity(intento_de_enviar);
+    }
+}
